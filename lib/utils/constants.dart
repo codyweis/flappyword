@@ -1,0 +1,1 @@
+const health = 2;
