@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart' hide Block;
@@ -11,10 +12,13 @@ import 'package:flappy_word/components/player.dart';
 import 'package:flappy_word/components/ui_elements/ground.dart';
 import 'package:flappy_word/enums/difficulty.dart';
 import 'package:flappy_word/managers/segment_manager.dart';
+import 'package:flappy_word/models/character_variation.dart';
+import 'package:flappy_word/models/game_character.dart';
 import 'package:flappy_word/models/game_letter_model.dart';
 import 'package:flappy_word/overlays/hud.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FlappyWordGame extends FlameGame
     with TapCallbacks, HasCollisionDetection, HasKeyboardHandlerComponents {
@@ -23,6 +27,9 @@ class FlappyWordGame extends FlameGame
   FlappyWordGame() {
     blockManager = BlockManager(this);
   }
+
+  late CharacterVariation selectedCharacter =
+      CharacterVariation(imagePath: '', displayPath: '');
 
   double worldDistanceTravelled = 0.0;
 
@@ -55,22 +62,42 @@ class FlappyWordGame extends FlameGame
   @override
   Future<void> onLoad() async {
     await images.loadAll([
-      'ball.png',
       'block.png',
-      'round.png',
-      'obstacle.png',
+      'classicbirdone.png',
+      'classicbirdonesheet.png',
+      'classicbirdtwo.png',
+      'classicbirdtwosheet.png',
+      'classicbirdthree.png',
+      'classicbirdthreesheet.png',
+      'devilbirdone.png',
+      'devilbirdtwo.png',
+      'dragonalienone.png',
+      'dragonalienonesheet.png',
+      'dragonalientwo.png',
+      'dragonalientwosheet.png',
+      'devilbirdonesheet.png',
+      'devilbirdtwosheet.png',
+      'fireSheet.png',
       'submit.png',
       'ground.png',
       'heart.png',
       'blank.png',
       'alphabet.png'
     ]);
+
+    final prefs = await SharedPreferences.getInstance();
+    selectedCharacter.imagePath =
+        prefs.getString('selectedVariation') ?? 'devilbirdonesheet.png';
+    selectedCharacter.stepTime = prefs.getDouble('characterStepTime') ?? 0.09;
+    selectedCharacter.spriteAmount = prefs.getInt('characterSpriteAmount') ?? 8;
+    selectedCharacter.size = prefs.getDouble('characterSize') ?? 100;
+
     wordList = await loadWordList();
     print('Word List Size: ${wordList.length}');
 
     cameraComponent = CameraComponent(world: world);
     cameraComponent.viewfinder.anchor = Anchor.topLeft;
-    addAll([cameraComponent, world]);
+    await addAll([cameraComponent, world]);
 
     initializeGame();
   }
@@ -114,8 +141,8 @@ class FlappyWordGame extends FlameGame
     }
 
     _player = Player(
-      position: Vector2(128, canvasSize.y - 70),
-    );
+        position: Vector2(128, canvasSize.y - 70),
+        characterSize: selectedCharacter.size);
     world.add(_player);
     hudComponent = Hud();
     add(hudComponent!);
@@ -124,9 +151,11 @@ class FlappyWordGame extends FlameGame
   void playGame() {
     gameStarted = true;
     overlays.remove('MainMenu');
+    overlays.add("SubmitButton");
   }
 
   void reset() {
+    overlays.add("SubmitButton");
     gameStarted = true;
     score = 0;
     collectedLetters.clear();
@@ -141,11 +170,34 @@ class FlappyWordGame extends FlameGame
     initializeGame();
   }
 
+  void changeCharacter(
+      GameCharacter? newCharacter, CharacterVariation? newVariation) async {
+    world.remove(_player);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedCharacter', newCharacter!.name);
+    await prefs.setString('selectedVariation', newVariation!.imagePath);
+    await prefs.setDouble('characterStepTime', newVariation.stepTime);
+    await prefs.setInt('characterSpriteAmount', newVariation.spriteAmount);
+    await prefs.setDouble('characterSize', newVariation.size);
+
+    selectedCharacter.imagePath = newVariation.imagePath;
+    selectedCharacter.stepTime = newVariation.stepTime;
+    selectedCharacter.spriteAmount = newVariation.spriteAmount;
+    selectedCharacter.size = newVariation.size;
+
+    _player = Player(
+        position: Vector2(128, canvasSize.y - 70),
+        characterSize: newVariation.size);
+    world.add(_player);
+  }
+
   @override
   void update(double dt) {
     if (health <= 0) {
       overlays.add('GameOver');
       overlays.remove('MainMenu');
+      overlays.remove("SubmitButton");
       gameStarted = false;
     }
     blockManager.update();
@@ -159,7 +211,7 @@ class FlappyWordGame extends FlameGame
 
   @override
   Color backgroundColor() {
-    return const Color.fromARGB(255, 241, 251, 255);
+    return const Color.fromARGB(255, 192, 211, 219);
   }
 
   String getRandomLetter() {
@@ -211,22 +263,26 @@ class FlappyWordGame extends FlameGame
     String collectedWord =
         collectedLetters.map((letter) => letter.letter).join();
     bool loseHealth = true;
-
-    for (int length = collectedWord.length; length >= 3; length--) {
-      for (int startIndex = 0;
-          startIndex <= collectedWord.length - length;
-          startIndex++) {
-        String subWord =
-            collectedWord.substring(startIndex, startIndex + length);
-        print('Checking substring: $subWord');
-        if (wordList.contains(subWord)) {
-          print("Found word: $subWord");
-          getGameLettersFromSubwordAndRemove(subWord);
-          loseHealth = false;
-          return;
+    try {
+      for (int length = collectedWord.length; length >= 3; length--) {
+        for (int startIndex = 0;
+            startIndex <= collectedWord.length - length;
+            startIndex++) {
+          String subWord =
+              collectedWord.substring(startIndex, startIndex + length);
+          print('Checking substring: $subWord');
+          if (wordList.contains(subWord)) {
+            print("Found word: $subWord");
+            getGameLettersFromSubwordAndRemove(subWord);
+            loseHealth = false;
+            return;
+          }
         }
       }
+    } catch (e) {
+      print(e);
     }
+
     if (loseHealth) health--;
     if (collectedLetters.length < 3) {
       showAnimatedMessage("Must have at least 3 letters!", 5);
@@ -309,13 +365,18 @@ class FlappyWordGame extends FlameGame
       {Color color = Colors.red}) {
     final animatedMessage = AnimatedMessage(message, duration, color);
     // Place the message in the center of the screen (adjust as needed)
-    animatedMessage.position = Vector2(canvasSize.x / 2, 100);
 
-    animatedMessage.anchor = Anchor.center;
+    try {
+      animatedMessage.position = Vector2(canvasSize.x / 2, 100);
 
-    print('Canvas Size: $canvasSize'); // Add this line in showAnimatedMessage
+      animatedMessage.anchor = Anchor.center;
 
-    add(animatedMessage);
+      print('Canvas Size: $canvasSize');
+
+      add(animatedMessage);
+    } catch (e) {
+      print(e);
+    }
   }
 
   void loadGameSegments(int segmentIndex, double xPositionOffset) {

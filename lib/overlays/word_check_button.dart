@@ -1,46 +1,49 @@
-import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flappy_word/screens/game_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animated_button/flutter_animated_button.dart';
 
-class WordCheckButtonComponent extends PositionComponent with TapCallbacks {
-  late Sprite _buttonSprite;
+class WordCheckButton extends StatefulWidget {
   final FlappyWordGame game;
+  const WordCheckButton({super.key, required this.game});
 
-  WordCheckButtonComponent(this.game) {
-    size = Vector2(80, 80); // Increased size
-    anchor = Anchor.center;
+  @override
+  State<WordCheckButton> createState() => _WordCheckButtonState();
+}
+
+class _WordCheckButtonState extends State<WordCheckButton> {
+  bool _isSelected = false;
+
+  void _onButtonPress() {
+    setState(() {
+      _isSelected = !_isSelected;
+    });
+    widget.game.checkWord();
   }
 
   @override
-  Future<void> onLoad() async {
-    super.onLoad();
-    _buttonSprite = await Sprite.load('submit.png');
-
-    // Positioning the button vertically centered and on the left side
-    position = Vector2(
-      0 + size.x / 2, // On the left but considering its anchor
-      (game.size.y / 4) - (size.y / 2), // Centered vertically
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: const Alignment(-1, -.5),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal, // button color
+            foregroundColor: Colors.white, // icon/text color
+            shadowColor: Colors.black, // shadow color
+            elevation: 5, // shadow depth
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // rounded corner
+            ),
+            padding: const EdgeInsets.all(16),
+          ),
+          onPressed: () => _onButtonPress(),
+          child: const Icon(
+            Icons.check, // using a checkmark as an example
+            size: 24,
+          ),
+        ),
+      ),
     );
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    _buttonSprite.render(canvas, size: size);
-  }
-
-  bool isTapped(Offset position) {
-    final topLeft = this.position - Vector2(size.x / 2, size.y / 2);
-    final bottomRight = this.position + Vector2(size.x / 2, size.y / 2);
-    return position.dx >= topLeft.x &&
-        position.dx <= bottomRight.x &&
-        position.dy >= topLeft.y &&
-        position.dy <= bottomRight.y;
-  }
-
-  @override
-  void onTapUp(TapUpEvent event) {
-    game.checkWord();
   }
 }

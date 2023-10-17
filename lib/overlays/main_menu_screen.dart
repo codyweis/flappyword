@@ -1,8 +1,11 @@
+import 'package:flame/components.dart';
+import 'package:flappy_word/screens/customize_scren.dart';
 import 'package:flappy_word/screens/game_screen.dart';
 import 'package:flappy_word/screens/help_screen.dart';
 import 'package:flappy_word/screens/settings_screen.dart';
 import 'package:flappy_word/utils/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MainMenu extends StatefulWidget {
   final FlappyWordGame game;
@@ -42,38 +45,79 @@ class MainMenuState extends State<MainMenu> {
   Widget _buildMenuContainer(int highScore) {
     const blackTextColor = Color.fromRGBO(0, 0, 0, 1.0);
     const whiteTextColor = Color.fromRGBO(255, 255, 255, 1.0);
-    const titleStyle = TextStyle(color: whiteTextColor, fontSize: 24);
-    const scoreStyle = TextStyle(color: whiteTextColor, fontSize: 18);
-    const infoStyle = TextStyle(color: whiteTextColor, fontSize: 16);
+    final titleStyle = GoogleFonts.aBeeZee(
+      textStyle: const TextStyle(
+        color: whiteTextColor,
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
+    final scoreStyle = GoogleFonts.aBeeZee(
+      textStyle: const TextStyle(
+        color: whiteTextColor,
+        fontSize: 18,
+      ),
+    );
+
+    final infoStyle = GoogleFonts.aBeeZee(
+      textStyle: const TextStyle(
+        color: whiteTextColor,
+        fontSize: 16,
+      ),
+    );
 
     return Material(
       color: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(10.0),
-        height: 400,
+        height: 450,
         width: 300,
         decoration: const BoxDecoration(
           color: blackTextColor,
           borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          // Changed from Column to Stack
           children: [
-            const Text('Flappy Word', style: titleStyle),
-            const SizedBox(height: 20),
-            Text('High Score: $highScore', style: scoreStyle),
-            const SizedBox(height: 20),
-            _buildPlayButton(),
-            _buildIconButtonRow(),
-            const SizedBox(height: 10),
-            const Text(
-              '''
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon:
+                    const Icon(Icons.stars, color: whiteTextColor, size: 40.0),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => CustomizeScreen(game: widget.game),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Column(
+              // Existing Column is now a child of Stack
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                    height: 48), // Make space for the aligned IconButton
+                Text('Flappy Word', style: titleStyle),
+                const SizedBox(height: 20),
+                Text('High Score: $highScore', style: scoreStyle),
+                const SizedBox(height: 20),
+                _buildPlayButton(),
+                const SizedBox(height: 10),
+                _buildIconButtonRow(),
+                const SizedBox(height: 10),
+                Text(
+                  '''
 
 Tap to jump!
 
 Collect letters to build words for points, must be at least 3 letters to submit a word!''',
-              textAlign: TextAlign.center,
-              style: infoStyle,
+                  textAlign: TextAlign.center,
+                  style: infoStyle,
+                ),
+              ],
             ),
           ],
         ),
@@ -85,6 +129,14 @@ Collect letters to build words for points, must be at least 3 letters to submit 
     const blackTextColor = Color.fromRGBO(0, 0, 0, 1.0);
     const whiteTextColor = Color.fromRGBO(255, 255, 255, 1.0);
 
+    final titleStyle = GoogleFonts.aBeeZee(
+      textStyle: const TextStyle(
+        color: blackTextColor,
+        fontSize: 40,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
     return SizedBox(
       width: 200,
       height: 75,
@@ -93,9 +145,9 @@ Collect letters to build words for points, must be at least 3 letters to submit 
           widget.game.playGame();
         },
         style: ElevatedButton.styleFrom(backgroundColor: whiteTextColor),
-        child: const Text(
-          'Play',
-          style: TextStyle(fontSize: 40.0, color: blackTextColor),
+        child: Text(
+          'PLAY',
+          style: titleStyle,
         ),
       ),
     );
@@ -122,7 +174,7 @@ Collect letters to build words for points, must be at least 3 letters to submit 
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => SettingsScreen(game: widget.game),
+                builder: (context) => CustomizeScreen(game: widget.game),
               ),
             );
           },
@@ -132,12 +184,13 @@ Collect letters to build words for points, must be at least 3 letters to submit 
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => SettingsScreen(game: widget.game),
+                builder: (context) => CustomizeScreen(
+                  game: widget.game,
+                ),
               ),
             );
           },
         ),
-        // ... Other Icons (shop, brush)
       ],
     );
   }

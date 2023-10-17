@@ -10,6 +10,8 @@ dependencies:
   flame: ^1.9.1
   flutter:
     sdk: flutter
+  flutter_animated_button: ^2.0.3
+  google_fonts: ^6.1.0
   shared_preferences: ^2.2.2
 
 dev_dependencies:

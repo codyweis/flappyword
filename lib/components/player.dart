@@ -13,9 +13,9 @@ import 'package:flutter/material.dart';
 class Player extends SpriteAnimationComponent
     with CollisionCallbacks, HasGameRef<FlappyWordGame> {
   final Vector2 velocity;
-  final double jumpSpeed = 300; // Define how "strong" the jump is
+  final double jumpSpeed = 350; // Define how "strong" the jump is
 
-  final double terminalVelocity = 600;
+  final double terminalVelocity = 700;
 
   final Vector2 fromAbove = Vector2(0, -1);
   bool isOnGround = false;
@@ -25,50 +25,74 @@ class Player extends SpriteAnimationComponent
   bool hitByEnemy = false;
   double moveSpeed = 150;
 
-  Player({required Vector2 position})
+  Player({required Vector2 position, double characterSize = 100})
       : velocity = Vector2.zero(),
-        super(position: position, size: Vector2.all(64), anchor: Anchor.center);
+        super(
+            position: position,
+            size: Vector2.all(characterSize),
+            anchor: Anchor.center);
+
+  SpriteAnimation? jumpAnimation;
+  SpriteAnimation? fallAnimation;
 
   @override
   void onLoad() {
     moveSpeed = game.moveSpeed;
-    animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('ball.png'),
+    jumpAnimation = SpriteAnimation.fromFrameData(
+      game.images.fromCache(game.selectedCharacter.imagePath),
       SpriteAnimationData.sequenced(
-        amount: 1,
-        textureSize: Vector2.all(16),
-        stepTime: 0.12,
+        amount: game.selectedCharacter.spriteAmount,
+        textureSize: Vector2.all(100),
+        stepTime: game.selectedCharacter.stepTime,
       ),
     );
+
+    fallAnimation = SpriteAnimation.fromFrameData(
+      game.images.fromCache(game.selectedCharacter.imagePath),
+      SpriteAnimationData.sequenced(
+        amount: game.selectedCharacter.spriteAmount,
+        textureSize: Vector2.all(100),
+        stepTime: .5,
+      ),
+    );
+    animation = jumpAnimation;
     add(
       CircleHitbox(),
     );
   }
 
   void jump() {
-    // Apply the jump speed to the y-axis of the velocity
     velocity.y = -jumpSpeed;
   }
 
   @override
   void update(double dt) {
-    if (position.x + width < game.size.x / 2) {
-      velocity.x = moveSpeed;
-    } else {
-      velocity.x = 0;
-    }
-    if (position.x + 64 >= game.size.x / 2 || game.gameStarted == false) {
+    if (game.gameStarted == false) {
       game.objectSpeed = -moveSpeed;
-      game.worldDistanceTravelled -= game.objectSpeed * dt;
     }
     if (game.gameStarted) {
+      game.worldDistanceTravelled -= game.objectSpeed * dt;
       position += velocity * dt;
+
+      if (position.x + 100 < (game.size.x / 2) + 100 && position.x > 100) {
+        velocity.x = -50;
+      } else {
+        velocity.x = 50;
+      }
 
       // Gravity to make the character fall back down after a jump
       velocity.y += gravity * dt;
 
       // Apply terminal velocity
       velocity.y = velocity.y.clamp(-jumpSpeed, terminalVelocity);
+
+      if (velocity.y < 0) {
+        // Moving upwards (jumping)
+        animation = jumpAnimation;
+      } else if (velocity.y > 0) {
+        // Moving downwards (falling)
+        animation = fallAnimation;
+      }
 
       // If ember fell in pit, then game over.
       if (position.y > game.size.y + size.y && game.gameStarted == true) {
@@ -157,7 +181,7 @@ class Player extends SpriteAnimationComponent
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,
-          duration: 0.1,
+          duration: 0.12,
           repeatCount: 5,
         ),
       )..onComplete = () {
@@ -196,7 +220,7 @@ class FadingTextComponent extends PositionComponent {
   void update(double dt) {
     super.update(dt);
     time += dt;
-    opacity = (1.5 - time).clamp(0.0, 1.0); // Fade over 1.5 seconds
+    opacity = (1.5 - time).clamp(0.0, 1.0);
 
     if (opacity == 0) {
       removeFromParent(); // Remove when fully transparent

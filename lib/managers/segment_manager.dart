@@ -23,14 +23,14 @@ class BlockManager {
 
   List<Block> activeBlocks = [];
   double lastBlockXPosition = 0.0;
-  final double distanceBetweenBlocks = 25.0;
+  final double distanceBetweenBlocks = 15.0;
 
   // instance variable to keep track of the last rounded distance at which a block was spawned.
   int lastRoundedDistanceSpawned = 0;
 
   void update() {
     if (game.gameStarted) {
-      int roundedDistance = (game.worldDistanceTravelled ~/ 300) * 100;
+      int roundedDistance = (game.worldDistanceTravelled ~/ 200) * 100;
       if (roundedDistance > lastRoundedDistanceSpawned) {
         int randomChance =
             _rand.nextInt(100); // Generates a number between 0 and 99 inclusive
@@ -110,9 +110,6 @@ class BlockManager {
     // Logic for removing off-screen blocks remains the same.
     activeBlocks.removeWhere(
         (block) => block.gridPosition.x < game.worldDistanceTravelled);
-
-    print("New block spawned at: ${newBlock.gridPosition.x}");
-    print("World distance travelled: ${game.worldDistanceTravelled}");
   }
 }
 
@@ -122,7 +119,7 @@ Random _rand = Random();
 
 Vector2 generateRandomPosition() {
   int x = 10;
-  int y = 1 + _rand.nextInt(9); // Starts from 1, goes up to 9
+  int y = 1 + _rand.nextInt(8); // Starts from 1, goes up to 9
   return Vector2(x.toDouble(), y.toDouble());
 }
 

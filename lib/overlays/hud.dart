@@ -1,7 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flappy_word/models/game_letter_model.dart';
 import 'package:flappy_word/overlays/health.dart';
-import 'package:flappy_word/overlays/word_check_button.dart';
 import 'package:flappy_word/screens/game_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async' as t;
@@ -76,7 +75,6 @@ class Hud extends PositionComponent with HasGameRef<FlappyWordGame> {
 
   late TextComponent _scoreTextComponent;
   List<LetterWithSubtextComponent> letterComponents = [];
-  late WordCheckButtonComponent _wordCheckButton;
 
   final double letterSpacing = 20.0;
   final Vector2 initialLetterPosition =
@@ -100,15 +98,22 @@ class Hud extends PositionComponent with HasGameRef<FlappyWordGame> {
     _scoreTextComponent = TextComponent(
       text: '${game.score}',
       textRenderer: TextPaint(
-        style: const TextStyle(fontSize: 32, color: Colors.black),
+        style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                blurRadius: 3.0,
+                color: Colors.black,
+                offset: Offset(3.0, 3.0),
+              ),
+            ]),
       ),
       position: Vector2(screenPadding + (0.1 * game.size.x), 60),
     );
+
     add(_scoreTextComponent);
-
-    _wordCheckButton = WordCheckButtonComponent(game);
-
-    add(_wordCheckButton);
   }
 
   void _addLetterToHUD(GameLetter gameLetter) {
